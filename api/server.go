@@ -2,6 +2,8 @@ package api
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"time"
 
@@ -19,9 +21,10 @@ const (
 
 // Server is main server instance
 type Server struct {
-	l *log.Logger
-	e *gin.Engine
-	r *rabbit
+	l  *log.Logger
+	e  *gin.Engine
+	r  *rabbit
+	db *pg.DB
 }
 
 type Message struct {
@@ -35,7 +38,7 @@ type Message struct {
 	LastUpdatedDate *time.Time
 	SMSCMessageID   string
 	Price           float32
-	Clnt_id         int
+	ClntId          int
 }
 
 // Run is the entry point to the program
@@ -50,6 +53,7 @@ func (s *Server) Run() error {
 	log.SetOutput(lumberjackLogRotate)
 
 	s.l = log.StandardLogger()
+	s.db = ConnectDB()
 	s.e = gin.Default()
 	s.getRoutes()
 
@@ -57,10 +61,15 @@ func (s *Server) Run() error {
 		return errors.Wrapf(err, "cannot start server")
 	}
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	s.db.Close()
+
 	return nil
 }
 
-func (s *Server) ConnectDB() *pg.DB {
+func ConnectDB() *pg.DB {
 	db := pg.Connect(&pg.Options{
 		Addr:     ":5432",
 		User:     "postgres",
@@ -68,4 +77,12 @@ func (s *Server) ConnectDB() *pg.DB {
 		Database: "messages",
 	})
 	return db
+}
+
+func ErrorLog(res bool, errorMessage string) {
+	if res {
+		log.Info(errorMessage)
+	} else {
+		log.Errorf(errorMessage)
+	}
 }

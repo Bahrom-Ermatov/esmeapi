@@ -11,17 +11,15 @@ import (
 func (s *Server) GetSMSDetail(c *gin.Context) {
 	msgId := c.Query("msg_id")
 
-	db := s.ConnectDB()
-	defer db.Close()
-
 	message := new(Message)
-	err := db.Model(message).
+	err := s.db.Model(message).
 		ColumnExpr("dst, message, src, state, created_at, last_updated_date").
 		Where("id = ?", msgId).
 		Select()
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении сообщения из БД"})
+		ErrorLog(false, err.Error())
 		return
 	}
 
