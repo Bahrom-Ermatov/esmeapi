@@ -18,8 +18,7 @@ func (s *Server) GetSMSDetail(c *gin.Context) {
 		Select()
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении сообщения из БД"})
-		ErrorLog(false, err.Error())
+		SuccessFalse(c, err.Error(), "Возникла ошибка при обработке")
 		return
 	}
 

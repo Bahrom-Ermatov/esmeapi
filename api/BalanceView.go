@@ -22,8 +22,7 @@ func (s *Server) GetClientBalance(c *gin.Context) {
 		Select()
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Ошибка при получении баланса клиента"})
-		ErrorLog(false, err.Error())
+		SuccessFalse(c, err.Error(), "Возникла ошибка при обработке")
 		return
 	}
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -79,10 +80,12 @@ func ConnectDB() *pg.DB {
 	return db
 }
 
-func ErrorLog(res bool, errorMessage string) {
-	if res {
-		log.Info(errorMessage)
-	} else {
-		log.Errorf(errorMessage)
-	}
+func SuccessFalse(c *gin.Context, errorMessage string, outErrMessage string) {
+	c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": outErrMessage})
+	log.Errorf(errorMessage)
+}
+
+func SuccessTrue(c *gin.Context, errorMessage string) {
+	c.JSON(http.StatusOK, gin.H{"ok": true, "message": errorMessage})
+	log.Errorf(errorMessage)
 }
